@@ -13,6 +13,7 @@ public class Menu {
 
     private File currentFile = null;
     private boolean manualSaveDone = false;
+    private boolean dataChanged = false;
 
     public Menu(AbstractStorage listStorage, AbstractStorage mapStorage) {
         this.listStorage = listStorage;
@@ -24,6 +25,8 @@ public class Menu {
         boolean exit = false;
         while (!exit) {
             System.out.println("\n--- Menu ---");
+            System.out.println("Current file: " + (currentFile != null ? currentFile.getName() : "(none)") +
+                    (dataChanged ? " *unsaved changes*" : ""));
             System.out.println("1) Show all (List)");
             System.out.println("2) Show all (Map)");
             System.out.println("3) Add wagon");
@@ -33,8 +36,9 @@ public class Menu {
             System.out.println("7) Load from file (replace list)");
             System.out.println("8) Sort List by price");
             System.out.println("9) Sort List by release date");
-            System.out.println("10) Clear all");
-            System.out.println("11) Add wagons from file (append to list)");
+            System.out.println("10) Sort List by Id`s");
+            System.out.println("11) Clear all");
+            System.out.println("12) Add wagons from file (append to list)");
             System.out.println("0) Exit");
             System.out.print("Choose: ");
             String choice = br.readLine();
@@ -48,12 +52,10 @@ public class Menu {
                 case "7": loadFromFileReplace(); break;
                 case "8": sortListByPrice(); break;
                 case "9": sortListByDate(); break;
-                case "10": clearAll(); break;
-                case "11": addFromFile(); break;
-                case "0":
-                    exitProcedure();
-                    exit = true;
-                    break;
+                case "10": sortListByIds(); break;
+                case "11": clearAll(); break;
+                case "12": addFromFile(); break;
+                case "0": exitProcedure(); exit = true; break;
                 default: System.out.println("Unknown option.");
             }
         }
@@ -81,6 +83,7 @@ public class Menu {
             }
             currentFile = file;
             manualSaveDone = false;
+            dataChanged = true;
             System.out.println("Loaded " + addedCount + " wagons from " + fname);
         } catch (IOException ex) {
             System.out.println("Error reading file: " + ex.getMessage());
@@ -105,6 +108,8 @@ public class Menu {
                 boolean addedMap = mapStorage.add(w);
                 if (addedList && addedMap) addedCount++;
             }
+            manualSaveDone = false;
+            dataChanged = true;
             System.out.println("Added " + addedCount + " wagons from " + fname);
         } catch (IOException ex) {
             System.out.println("Error reading file: " + ex.getMessage());
@@ -138,8 +143,11 @@ public class Menu {
             Wagon w = new Wagon(id, type, model, cap, seats, d, price);
             boolean addedList = listStorage.add(w);
             boolean addedMap = mapStorage.add(w);
-            if (addedList && addedMap) System.out.println("Added successfully.");
-            else System.out.println("Not added (duplicate id?).");
+            if (addedList && addedMap) {
+                System.out.println("Added successfully.");
+                manualSaveDone = false;
+                dataChanged = true;
+            } else System.out.println("Not added (duplicate id?).");
         } catch (Exception ex) {
             System.out.println("Invalid input: " + ex.getMessage());
         }
@@ -162,7 +170,11 @@ public class Menu {
             Wagon w = new Wagon(nid, type, model, cap, seats, d, price);
             boolean u1 = listStorage.update(id, w);
             boolean u2 = mapStorage.update(id, w);
-            System.out.println((u1 && u2) ? "Updated." : "Update failed.");
+            if (u1 && u2) {
+                System.out.println("Updated.");
+                manualSaveDone = false;
+                dataChanged = true;
+            } else System.out.println("Update failed.");
         } catch (Exception ex) {
             System.out.println("Invalid input: " + ex.getMessage());
         }
@@ -173,35 +185,49 @@ public class Menu {
         int id = Integer.parseInt(br.readLine().trim());
         boolean r1 = listStorage.remove(id);
         boolean r2 = mapStorage.remove(id);
-        System.out.println((r1 || r2) ? "Deleted." : "Not found.");
+        if (r1 || r2) {
+            System.out.println("Deleted.");
+            manualSaveDone = false;
+            dataChanged = true;
+        } else System.out.println("Not found.");
     }
 
     private void savePrompt() throws IOException {
-        System.out.print("Enter filename to save (e.g. wagons_out.txt): ");
+        System.out.print("Enter filename to save (or empty to overwrite current): ");
         String fname = br.readLine().trim();
-        File file = new File(fname);
+        File file = fname.isEmpty() && currentFile != null ? currentFile : new File(fname.isEmpty() ? "wagons.txt" : fname);
         DataFileWriter writer = new DataFileWriter(file);
         try {
             writer.writeAll(listStorage.getAll());
             currentFile = file;
             manualSaveDone = true;
-            System.out.println("Saved to " + fname);
+            dataChanged = false;
+            System.out.println("Saved to " + file.getName());
         } catch (Exception ex) {
             System.out.println("Error saving: " + ex.getMessage());
         }
     }
 
     private void sortListByPrice() {
-        if (listStorage instanceof WagonList) {
-            WagonList wl = (WagonList) listStorage;
+        if (listStorage instanceof WagonList wl) {
             wl.getWagonList().sort((a,b) -> Double.compare(a.getPrice(), b.getPrice()));
             System.out.println("Sorted list by price.");
-        } else System.out.println("List storage not available.");
+            manualSaveDone = false;
+            dataChanged = true;
+        }
+    }
+
+    private void sortListByIds() {
+        if (listStorage instanceof WagonList wl) {
+            wl.getWagonList().sort((a,b) -> Integer.compare(a.getId(), b.getId()));
+            System.out.println("Sorted list by Ids.");
+            manualSaveDone = false;
+            dataChanged = true;
+        }
     }
 
     private void sortListByDate() {
-        if (listStorage instanceof WagonList) {
-            WagonList wl = (WagonList) listStorage;
+        if (listStorage instanceof WagonList wl) {
             wl.getWagonList().sort((a,b) -> {
                 if (a.getReleaseDate() == null && b.getReleaseDate() == null) return 0;
                 if (a.getReleaseDate() == null) return 1;
@@ -209,49 +235,48 @@ public class Menu {
                 return a.getReleaseDate().compareTo(b.getReleaseDate());
             });
             System.out.println("Sorted list by date.");
-        } else System.out.println("List storage not available.");
+            manualSaveDone = false;
+            dataChanged = true;
+        }
     }
 
     private void clearAll() {
         listStorage.clear();
         mapStorage.clear();
+        manualSaveDone = false;
+        dataChanged = true;
         System.out.println("Cleared.");
     }
 
     private void exitProcedure() throws IOException {
+        if (!dataChanged) {
+            System.out.println("No unsaved changes. Exiting...");
+            return;
+        }
         if (manualSaveDone) {
-            System.out.println("Exiting (manual save already done)...");
+            System.out.println("Exiting...");
             return;
         }
 
         if (currentFile != null) {
-            DataFileWriter writer = new DataFileWriter(currentFile);
-            writer.writeAll(listStorage.getAll());
-            System.out.println("Data automatically saved to " + currentFile.getName());
-        } else if (!listStorage.getAll().isEmpty()) {
-            boolean good = false;
-            while(!good) {
-                System.out.print("No save file associated. Do you want to save ts? (y/n): ");
-                String pinos = br.readLine();
-                switch (pinos) {
-                    case "y":
-                        System.out.print("Enter savefile name: ");
-                        String fname = br.readLine().trim();
-                        if (!fname.isEmpty()) {
-                            DataFileWriter writer = new DataFileWriter(new File(fname));
-                            writer.writeAll(listStorage.getAll());
-                            System.out.println("Data saved to " + fname);
-                        }
-                        good = true;
-                        break;
-                    case "n":
-                        return;
-                    default:
-                        System.out.println("Invalid answer eblan");
-                }
+            System.out.print("Save changes to " + currentFile.getName() + "? (y/n): ");
+            String ans = br.readLine().trim().toLowerCase();
+            if (ans.equals("y")) {
+                new DataFileWriter(currentFile).writeAll(listStorage.getAll());
+                System.out.println("Saved to " + currentFile.getName());
             }
         } else {
-            System.out.println("List empty, nothing to save.");
+            boolean good = false;
+            while(!good) {
+            System.out.print("No save file. Save before exit? (y/n): ");
+            String ans = br.readLine().trim().toLowerCase();
+                switch (ans) {
+                    case ("y"):
+                        savePrompt(); good = true; break;
+                    case("n") : return;
+                    default: System.out.println("Invalid answer eblan");
+                }
+            }
         }
     }
 }

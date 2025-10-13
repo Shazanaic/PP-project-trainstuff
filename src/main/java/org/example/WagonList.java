@@ -9,8 +9,7 @@ public class WagonList extends AbstractStorage {
 
     @Override
     public boolean add(AbstractItem item) {
-        if (!(item instanceof Wagon)) return false;
-        Wagon w = (Wagon) item;
+        if (!(item instanceof Wagon w)) return false;
         if (findById(w.getId()) != null) return false;
         list.add(w);
         return true;
