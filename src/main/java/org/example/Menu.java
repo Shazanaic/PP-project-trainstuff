@@ -1,9 +1,13 @@
 package org.example;
 
+import javax.crypto.SecretKey;
 import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+
+import static org.example.CryptoUtils.*;
+import static org.example.ZipUtils.*;
 
 public class Menu {
     private final AbstractStorage listStorage;
@@ -39,25 +43,149 @@ public class Menu {
             System.out.println("10) Sort List by Id`s");
             System.out.println("11) Clear all");
             System.out.println("12) Add wagons from file (append to list)");
+            System.out.println("13) Encrypt/Decrypt data file");
+            System.out.println("14) Archive data file");
             System.out.println("0) Exit");
             System.out.print("Choose: ");
             String choice = br.readLine();
+
             switch (choice) {
-                case "1": showList(); break;
-                case "2": showMap(); break;
-                case "3": addFromConsole(); break;
-                case "4": updateFromConsole(); break;
-                case "5": deleteFromConsole(); break;
-                case "6": savePrompt(); break;
-                case "7": loadFromFileReplace(); break;
-                case "8": sortListByPrice(); break;
-                case "9": sortListByDate(); break;
-                case "10": sortListByIds(); break;
-                case "11": clearAll(); break;
-                case "12": addFromFile(); break;
-                case "0": exitProcedure(); exit = true; break;
-                default: System.out.println("Unknown option.");
+                case "1" -> showList();
+                case "2" -> showMap();
+                case "3" -> addFromConsole();
+                case "4" -> updateFromConsole();
+                case "5" -> deleteFromConsole();
+                case "6" -> saveSubmenu();
+                case "7" -> loadSubmenu();
+                case "8" -> sortListByPrice();
+                case "9" -> sortListByDate();
+                case "10" -> sortListByIds();
+                case "11" -> clearAll();
+                case "12" -> addFromFile();
+                case "13" -> encryptionMenu();
+                case "14" -> zipMenu();
+                case "0" -> {
+                    exitProcedure();
+                    exit = true;
+                }
+                default -> System.out.println("Unknown option.");
             }
+        }
+    }
+
+    private void saveSubmenu() throws IOException {
+        System.out.println("Save options:");
+        System.out.println("1) Text (default)");
+        System.out.println("2) XML");
+        System.out.println("3) JSON");
+        System.out.print("Choose: ");
+        String ch = br.readLine();
+        switch (ch) {
+            case "1" -> savePrompt();
+            case "2" -> System.out.println("XML save not implemented yet.");
+            case "3" -> System.out.println("JSON save not implemented yet.");
+            default -> System.out.println("Invalid choice.");
+        }
+    }
+
+    private void loadSubmenu() throws IOException {
+        System.out.println("Load options:");
+        System.out.println("1) Text (default)");
+        System.out.println("2) XML");
+        System.out.println("3) JSON");
+        System.out.print("Choose: ");
+        String ch = br.readLine();
+        switch (ch) {
+            case "1" -> loadFromFileReplace();
+            case "2" -> System.out.println("XML load not implemented yet.");
+            case "3" -> System.out.println("JSON load not implemented yet.");
+            default -> System.out.println("Invalid choice.");
+        }
+    }
+
+    private void encryptionMenu() throws IOException {
+        System.out.println("Encryption options:");
+        System.out.println("1) Encrypt file");
+        System.out.println("2) Decrypt file");
+        System.out.println("3) Back");
+        System.out.print("Choose: ");
+        String ch = br.readLine();
+        switch (ch) {
+            case "1" -> encryptAction();
+            case "2" -> decryptAction();
+            case "3" -> {}
+            default -> System.out.println("Invalid choice.");
+        }
+    }
+
+    private void encryptAction() throws IOException {
+        System.out.print("Enter source file to encrypt: ");
+        String srcPath = br.readLine().trim();
+        File src = new File(srcPath);
+        if (!src.exists()) {
+            System.out.println("File not found.");
+            return;
+        }
+
+        System.out.print("Enter output file name for encrypted data: ");
+        String dstPath = br.readLine().trim();
+
+        try {
+            CryptoUtils.encryptFile(srcPath, dstPath);
+        } catch (Exception e) {
+            System.out.println("Encryption failed: " + e.getMessage());
+        }
+    }
+
+    private void decryptAction() throws IOException {
+        System.out.print("Enter encrypted file name: ");
+        String srcPath = br.readLine().trim();
+        File src = new File(srcPath);
+        if (!src.exists()) {
+            System.out.println("File not found.");
+            return;
+        }
+
+        System.out.print("Enter output file name (decrypted): ");
+        String dstPath = br.readLine().trim();
+
+        try {
+            CryptoUtils.decryptFile(srcPath, dstPath);
+        } catch (Exception e) {
+            System.out.println("Decryption failed: " + e.getMessage());
+        }
+    }
+
+    private void zipMenu() throws IOException {
+        System.out.println("Archive options:");
+        System.out.println("1) Create zip (single file)");
+        System.out.println("2) Back");
+        System.out.print("Choose: ");
+        String ch = br.readLine();
+        switch (ch) {
+            case "1" -> createZipAction();
+            case "2" -> {}
+            default -> System.out.println("Invalid choice.");
+        }
+    }
+
+    private void createZipAction() throws IOException {
+        System.out.print("Enter filename to archive: ");
+        String input = br.readLine().trim();
+        File file = new File(input);
+        if (!file.exists()) {
+            System.out.println("File not found.");
+            return;
+        }
+
+        System.out.print("Enter name for ZIP archive (or leave empty for default): ");
+        String zipName = br.readLine().trim();
+        if (zipName.isEmpty()) zipName = file.getName() + ".zip";
+
+        try {
+            zipFile(file, new File(zipName));
+        } catch (IOException e) {
+            System.out.println("Error creating archive: " + e.getMessage());
         }
     }
 
@@ -210,7 +338,7 @@ public class Menu {
 
     private void sortListByPrice() {
         if (listStorage instanceof WagonList wl) {
-            wl.getWagonList().sort((a,b) -> Double.compare(a.getPrice(), b.getPrice()));
+            wl.getWagonList().sort((a, b) -> Double.compare(a.getPrice(), b.getPrice()));
             System.out.println("Sorted list by price.");
             manualSaveDone = false;
             dataChanged = true;
@@ -219,7 +347,7 @@ public class Menu {
 
     private void sortListByIds() {
         if (listStorage instanceof WagonList wl) {
-            wl.getWagonList().sort((a,b) -> Integer.compare(a.getId(), b.getId()));
+            wl.getWagonList().sort((a, b) -> Integer.compare(a.getId(), b.getId()));
             System.out.println("Sorted list by Ids.");
             manualSaveDone = false;
             dataChanged = true;
@@ -228,7 +356,7 @@ public class Menu {
 
     private void sortListByDate() {
         if (listStorage instanceof WagonList wl) {
-            wl.getWagonList().sort((a,b) -> {
+            wl.getWagonList().sort((a, b) -> {
                 if (a.getReleaseDate() == null && b.getReleaseDate() == null) return 0;
                 if (a.getReleaseDate() == null) return 1;
                 if (b.getReleaseDate() == null) return -1;
@@ -267,14 +395,18 @@ public class Menu {
             }
         } else {
             boolean good = false;
-            while(!good) {
-            System.out.print("No save file. Save before exit? (y/n): ");
-            String ans = br.readLine().trim().toLowerCase();
+            while (!good) {
+                System.out.print("No save file. Save before exit? (y/n): ");
+                String ans = br.readLine().trim().toLowerCase();
                 switch (ans) {
-                    case ("y"):
-                        savePrompt(); good = true; break;
-                    case("n") : return;
-                    default: System.out.println("Invalid answer eblan");
+                    case "y" -> {
+                        savePrompt();
+                        good = true;
+                    }
+                    case "n" -> {
+                        return;
+                    }
+                    default -> System.out.println("Invalid answer.");
                 }
             }
         }
