@@ -14,7 +14,7 @@ import java.util.ArrayList;
 public class XmlHandler {
     private static final SimpleDateFormat fmt = new SimpleDateFormat("dd:MM:yy");
 
-    public static void saveToXML(List<AbstractItem> items, String filename) throws Exception {
+    public static void saveToXML(List<? extends AbstractItem> items, String filename) throws Exception {
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
         DocumentBuilder db = dbf.newDocumentBuilder();
         Document doc = db.newDocument();

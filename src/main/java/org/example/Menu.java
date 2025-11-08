@@ -77,13 +77,20 @@ public class Menu {
         System.out.println("Save options:");
         System.out.println("1) Text (default)");
         System.out.println("2) XML");
-        System.out.println("3) JSON");
         System.out.print("Choose: ");
-        String ch = br.readLine();
+        String ch = br.readLine().trim();
         switch (ch) {
             case "1" -> savePrompt();
-            case "2" -> System.out.println("XML save not implemented yet.");
-            case "3" -> System.out.println("JSON save not implemented yet.");
+            case "2" -> {
+                System.out.print("Enter XML file name to save: ");
+                String xmlFile = br.readLine().trim();
+                try {
+                    XmlHandler.saveToXML(listStorage.getAll(), xmlFile);
+                    System.out.println("Saved successfully to XML: " + xmlFile);
+                } catch (Exception e) {
+                    System.out.println("Failed to save XML: " + e.getMessage());
+                }
+            }
             default -> System.out.println("Invalid choice.");
         }
     }
@@ -92,16 +99,42 @@ public class Menu {
         System.out.println("Load options:");
         System.out.println("1) Text (default)");
         System.out.println("2) XML");
-        System.out.println("3) JSON");
         System.out.print("Choose: ");
-        String ch = br.readLine();
+        String ch = br.readLine().trim();
         switch (ch) {
             case "1" -> loadFromFileReplace();
-            case "2" -> System.out.println("XML load not implemented yet.");
-            case "3" -> System.out.println("JSON load not implemented yet.");
+            case "2" -> {
+                System.out.print("Enter XML file name to load: ");
+                String xmlFile = br.readLine().trim();
+                File file = new File(xmlFile);
+                if (!file.exists()) {
+                    System.out.println("File not found: " + xmlFile);
+                    return;
+                }
+
+                try {
+                    List<Wagon> loaded = XmlHandler.loadFromXML(xmlFile);
+                    listStorage.clear();
+                    mapStorage.clear();
+                    int addedCount = 0;
+                    for (Wagon w : loaded) {
+                        boolean addedList = listStorage.add(w);
+                        boolean addedMap = mapStorage.add(w);
+                        if (addedList && addedMap) addedCount++;
+                    }
+                    currentFile = file;
+                    manualSaveDone = false;
+                    dataChanged = true;
+                    System.out.println("Loaded " + addedCount + " wagons from XML: " + xmlFile);
+                } catch (Exception e) {
+                    System.out.println("Failed to load XML: " + e.getMessage());
+                }
+
+            }
             default -> System.out.println("Invalid choice.");
         }
     }
+
 
     private void encryptionMenu() throws IOException {
         System.out.println("Encryption options:");
