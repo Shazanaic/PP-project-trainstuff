@@ -13,14 +13,14 @@ public class CryptoUtils {
         String text = readTextFile(inputFile);
         String encrypted = encrypt(text);
         writeTextFile(outputFile, encrypted);
-        System.out.println("Файл успешно зашифрован: " + outputFile);
+        System.out.println("File encrypted succesfully: " + outputFile);
     }
 
     public static void decryptFile(String inputFile, String outputFile) throws Exception {
         String encrypted = readTextFile(inputFile);
         String decrypted = decrypt(encrypted);
         writeTextFile(outputFile, decrypted);
-        System.out.println("Файл успешно расшифрован: " + outputFile);
+        System.out.println("File decrypted succesfully: " + outputFile);
     }
 
     public static String encrypt(String data) throws Exception {
