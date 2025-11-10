@@ -77,6 +77,7 @@ public class Menu {
         System.out.println("Save options:");
         System.out.println("1) Text (default)");
         System.out.println("2) XML");
+        System.out.println("3) JSON");
         System.out.print("Choose: ");
         String ch = br.readLine().trim();
         switch (ch) {
@@ -91,6 +92,16 @@ public class Menu {
                     System.out.println("Failed to save XML: " + e.getMessage());
                 }
             }
+            case "3" -> {
+                System.out.print("Enter JSON file name to save: ");
+                String jsonFile = br.readLine().trim();
+                try {
+                    JsonHandler.saveToJSON(listStorage.getAll(), jsonFile);
+                    System.out.println("Saved successfully to JSON: " + jsonFile);
+                } catch (Exception e) {
+                    System.out.println("Failed to save JSON: " + e.getMessage());
+                }
+            }
             default -> System.out.println("Invalid choice.");
         }
     }
@@ -99,6 +110,7 @@ public class Menu {
         System.out.println("Load options:");
         System.out.println("1) Text (default)");
         System.out.println("2) XML");
+        System.out.println("3) JSON");
         System.out.print("Choose: ");
         String ch = br.readLine().trim();
         switch (ch) {
@@ -129,12 +141,37 @@ public class Menu {
                 } catch (Exception e) {
                     System.out.println("Failed to load XML: " + e.getMessage());
                 }
+            }
+            case "3" -> {
+                System.out.print("Enter JSON file name to load: ");
+                String jsonFile = br.readLine().trim();
+                File file = new File(jsonFile);
+                if (!file.exists()) {
+                    System.out.println("File not found: " + jsonFile);
+                    return;
+                }
 
+                try {
+                    List<Wagon> loaded = JsonHandler.loadFromJSON(jsonFile);
+                    listStorage.clear();
+                    mapStorage.clear();
+                    int addedCount = 0;
+                    for (Wagon w : loaded) {
+                        boolean addedList = listStorage.add(w);
+                        boolean addedMap = mapStorage.add(w);
+                        if (addedList && addedMap) addedCount++;
+                    }
+                    currentFile = file;
+                    manualSaveDone = false;
+                    dataChanged = true;
+                    System.out.println("Loaded " + addedCount + " wagons from JSON: " + jsonFile);
+                } catch (Exception e) {
+                    System.out.println("Failed to load JSON: " + e.getMessage());
+                }
             }
             default -> System.out.println("Invalid choice.");
         }
     }
-
 
     private void encryptionMenu() throws IOException {
         System.out.println("Encryption options:");

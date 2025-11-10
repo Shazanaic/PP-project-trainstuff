@@ -44,8 +44,11 @@ public class CryptoUtils {
         StringBuilder sb = new StringBuilder();
         try (BufferedReader br = new BufferedReader(new FileReader(path))) {
             String line;
+            boolean first = true;
             while ((line = br.readLine()) != null) {
-                sb.append(line).append(System.lineSeparator());
+                if (!first) sb.append('\n');
+                sb.append(line);
+                first = false;
             }
         }
         return sb.toString();
