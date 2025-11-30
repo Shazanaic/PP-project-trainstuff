@@ -10,3 +10,4 @@ Line 1: invalid data -> 2;pis;ka;31,00;50;11:05:07;13000,00 ; cause: For input s
 Line 2: invalid data -> 1456;pisun;sasun;40,00;60;11:09:01;16000,00 ; cause: For input string: "40,00"
 Line 1: invalid data -> 2;pis;ka;31,00;50;11:05:07;13000,00 ; cause: For input string: "31,00"
 Line 2: invalid data -> 1456;pisun;sasun;40,00;60;11:09:01;16000,00 ; cause: For input string: "40,00"
+Line 5: invalid data -> 1;pipa;17k;45.00;50;11:09:01;7000.00рвоы ; cause: For input string: "7000.00рвоы"

@@ -39,7 +39,16 @@ public class DataFileReader {
                     Date d = fmt.parse(parts[5].trim());
                     double price = Double.parseDouble(parts[6].trim());
 
-                    Wagon w = new Wagon(id, type, model, capacity, seats, d, price);
+                    Wagon w = new WagonBuilder()
+                            .setId(id)
+                            .setType(type)
+                            .setModel(model)
+                            .setCapacity(capacity)
+                            .setSeats(seats)
+                            .setReleaseDate(d)
+                            .setPrice(price)
+                            .build();
+
                     result.add(w);
                 } catch (NumberFormatException | ParseException ex) {
                     log.write(String.format("Line %d: invalid data -> %s ; cause: %s%n", lineNo, line, ex.getMessage()));

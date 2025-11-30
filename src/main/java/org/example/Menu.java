@@ -338,7 +338,15 @@ public class Menu {
             int seats = Integer.parseInt(p[4].trim());
             Date d = fmt.parse(p[5].trim());
             double price = Double.parseDouble(p[6].trim());
-            Wagon w = new Wagon(id, type, model, cap, seats, d, price);
+            Wagon w = new WagonBuilder()
+                    .setId(id)
+                    .setType(type)
+                    .setModel(model)
+                    .setCapacity(cap)
+                    .setSeats(seats)
+                    .setReleaseDate(d)
+                    .setPrice(price)
+                    .build();
             boolean addedList = listStorage.add(w);
             boolean addedMap = mapStorage.add(w);
             if (addedList && addedMap) {
@@ -365,7 +373,15 @@ public class Menu {
             int seats = Integer.parseInt(p[4].trim());
             Date d = fmt.parse(p[5].trim());
             double price = Double.parseDouble(p[6].trim());
-            Wagon w = new Wagon(nid, type, model, cap, seats, d, price);
+            Wagon w = new WagonBuilder()
+                    .setId(id)
+                    .setType(type)
+                    .setModel(model)
+                    .setCapacity(cap)
+                    .setSeats(seats)
+                    .setReleaseDate(d)
+                    .setPrice(price)
+                    .build();
             boolean u1 = listStorage.update(id, w);
             boolean u2 = mapStorage.update(id, w);
             if (u1 && u2) {

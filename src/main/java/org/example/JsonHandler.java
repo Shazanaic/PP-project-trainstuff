@@ -84,7 +84,16 @@ public class JsonHandler {
                 String ds = map.getOrDefault("releaseDate", "");
                 Date d = ds.isEmpty() ? null : fmt.parse(ds);
                 double price = Double.parseDouble(map.getOrDefault("price", "0"));
-                list.add(new Wagon(id, type, model, capacity, seats, d, price));
+                list.add(new WagonBuilder()
+                        .setId(id)
+                        .setType(type)
+                        .setModel(model)
+                        .setCapacity(capacity)
+                        .setSeats(seats)
+                        .setReleaseDate(d)
+                        .setPrice(price)
+                        .build()
+);
             } catch (NumberFormatException | ParseException e) {
                 System.out.println("Skipping invalid JSON entry: " + e.getMessage());
             }
