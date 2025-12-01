@@ -74,37 +74,149 @@ public class Menu {
     }
 
     private void saveSubmenu() throws IOException {
-        System.out.println("Save options:");
-        System.out.println("1) Text (default)");
+        System.out.println("Save options (multiple formats allowed):");
+        System.out.println("1) Text file");
         System.out.println("2) XML");
         System.out.println("3) JSON");
-        System.out.print("Choose: ");
-        String ch = br.readLine().trim();
-        switch (ch) {
-            case "1" -> savePrompt();
-            case "2" -> {
-                System.out.print("Enter XML file name to save: ");
-                String xmlFile = br.readLine().trim();
-                try {
-                    XmlHandler.saveToXML(listStorage.getAll(), xmlFile);
-                    System.out.println("Saved successfully to XML: " + xmlFile);
-                } catch (Exception e) {
-                    System.out.println("Failed to save XML: " + e.getMessage());
+        System.out.println("0) Cancel");
+
+        boolean wantTxt = false;
+        boolean wantXml = false;
+        boolean wantJson = false;
+
+        while (true) {
+            System.out.print("Choose formats (example '1 2 3'): ");
+            String line = br.readLine().trim();
+
+            if (line.equals("0")) return;
+
+            String[] parts = line.split("\\s+");
+            boolean ok = true;
+
+            wantTxt = wantXml = wantJson = false;
+
+            for (String p : parts) {
+                switch (p) {
+                    case "1" -> wantTxt = true;
+                    case "2" -> wantXml = true;
+                    case "3" -> wantJson = true;
+                    default -> ok = false;
                 }
             }
-            case "3" -> {
-                System.out.print("Enter JSON file name to save: ");
-                String jsonFile = br.readLine().trim();
-                try {
-                    JsonHandler.saveToJSON(listStorage.getAll(), jsonFile);
-                    System.out.println("Saved successfully to JSON: " + jsonFile);
-                } catch (Exception e) {
-                    System.out.println("Failed to save JSON: " + e.getMessage());
-                }
+
+            if (!ok) {
+                System.out.println("Invalid input. Try again.");
+                continue;
             }
-            default -> System.out.println("Invalid choice.");
+
+            if (!wantTxt && !wantXml && !wantJson) {
+                System.out.println("No formats selected.");
+                continue;
+            }
+
+            break;
+        }
+
+        List<AbstractItem> items = listStorage.getAll();
+        if (items.isEmpty()) {
+            System.out.println("List is empty — nothing to save.");
+            return;
+        }
+
+        String txtFile = null;
+        String xmlFile = null;
+        String jsonFile = null;
+
+        if (wantTxt) {
+            txtFile = askFileName("Enter TXT filename", "wagons.txt");
+        }
+        if (wantXml) {
+            xmlFile = askFileName("Enter XML filename", "wagons.xml");
+        }
+        if (wantJson) {
+            jsonFile = askFileName("Enter JSON filename", "wagons.json");
+        }
+
+        OutputWriter writer;
+
+        if (wantTxt) {
+            writer = new FileWriterAdapter(new File(txtFile));
+        } else if (wantXml) {
+            writer = new XmlWriterAdapter(xmlFile);
+        } else {
+            writer = new JsonWriterAdapter(jsonFile);
+        }
+
+        if (wantTxt && !(writer instanceof FileWriterAdapter)) {
+            writer = new FileDecorator(writer, new File(txtFile));
+        }
+        if (wantXml && !(writer instanceof XmlWriterAdapter)) {
+            writer = new XmlDecorator(writer, xmlFile);
+        }
+
+        if (wantJson && !(writer instanceof JsonWriterAdapter)) {
+            writer = new JsonDecorator(writer, jsonFile);
+        }
+
+        try {
+            writer.write(items);
+
+            System.out.println("Saved successfully in selected format(s).");
+
+            manualSaveDone = true;
+            dataChanged = false;
+            if (wantTxt) {
+                currentFile = new File(txtFile);
+            }
+
+        } catch (SecurityException se) {
+            System.out.println("Permission denied: " + se.getMessage());
+        } catch (FileNotFoundException fnfe) {
+            System.out.println("File not found or cannot create: " + fnfe.getMessage());
+        } catch (IOException ioe) {
+            System.out.println("I/O error: " + ioe.getMessage());
+        } catch (Exception e) {
+            System.out.println("Unexpected error: " + e.getMessage());
         }
     }
+
+
+    private String askFileName(String prompt, String defaultName) throws IOException {
+        while (true) {
+            System.out.print(prompt + " (default: " + defaultName + "): ");
+            String name = br.readLine().trim();
+
+            if (name.isEmpty()) name = defaultName;
+
+            File f = new File(name);
+
+            try {
+                if (f.exists()) {
+                    if (!f.canWrite()) {
+                        System.out.println("Cannot write to file: permission denied.");
+                        continue;
+                    }
+                } else {
+                    try {
+                        if (!f.createNewFile()) {
+                            System.out.println("Cannot create file: unknown reason.");
+                            continue;
+                        }
+                        f.delete();
+                    } catch (IOException e) {
+                        System.out.println("Cannot create file: " + e.getMessage());
+                        continue;
+                    }
+                }
+            } catch (SecurityException se) {
+                System.out.println("Access error: " + se.getMessage());
+                continue;
+            }
+
+            return name;
+        }
+    }
+
 
     private void loadSubmenu() throws IOException {
         System.out.println("Load options:");
