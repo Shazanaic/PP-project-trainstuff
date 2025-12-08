@@ -12,7 +12,6 @@ import java.util.List;
 
 public class MenuGUI extends JFrame {
     private final WagonList list;
-    private boolean darkTheme = false;
     private WagonTableModel tableModel;
     private JTable table;
     private JTextField searchField;
@@ -43,6 +42,7 @@ public class MenuGUI extends JFrame {
         tableModel = new WagonTableModel(list);
         table = new JTable(tableModel);
         table.setFillsViewportHeight(true);
+        table.setFont(new Font("Arial", Font.PLAIN, 14));
         sorter = new TableRowSorter<>(tableModel);
         table.setRowSorter(sorter);
         add(new JScrollPane(table), BorderLayout.CENTER);
